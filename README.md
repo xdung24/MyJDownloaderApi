@@ -1,5 +1,7 @@
 A C# wrapper for My.jdownloader.org API.
 
+This is a rewritten version of this PHP wrapper https://github.com/tofika/my.jdownloader.org-api-php-class
+
 Usage:
 
 First, you need JDownloader 2 Beta installed on your PC or other hardware, visit http://jdownloader.org/download/offline.
