@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
@@ -17,8 +18,8 @@ namespace MyJdownloader_Api
         public class Device
         {
             public string id;
-            public string type;
             public string name;
+            public string type;
         }
         private const string ApiUrl = "http://api.jdownloader.org";
         private const string Version = "1.0.18062014";
@@ -104,17 +105,27 @@ namespace MyJdownloader_Api
         }
         public bool GetDirectConnectionInfos()
         {
+            foreach (var device in Devices)
+            {
+                string result = CallAction(device, "/device/getDirectConnectionInfos", null);
+                if (string.IsNullOrEmpty(result))
+                {
+                    return false;
+                }
+                dynamic jsonContent = JObject.Parse(result);
+            }
             return true;
-            throw new NotImplementedException();
         }
 
-        public bool AddLinks(Device device, string[] links, string package)
+        public bool AddLinks(Device device, string links, string package)
         {
-            dynamic param = new ExpandoObject();
-            param.priority = "DEFAULT";
-            param.links = links;
-            param.autostart = true;
-            param.packageName = package;
+            dynamic obj = new ExpandoObject();
+            obj.priority = "DEFAULT";
+            obj.links = links;
+            obj.autostart = true;
+            obj.packageName = package;
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+            var param = new[] { json };
             string result = CallAction(device, "/linkgrabberv2/addLinks", param);
             if (string.IsNullOrEmpty(result))
                 return false;
@@ -197,7 +208,8 @@ namespace MyJdownloader_Api
             if (string.IsNullOrEmpty(response))
                 return null;
             dynamic jsonContent = JObject.Parse(response);
-            if (_ridCounter != jsonContent.rid)
+            int jsonContentRid = jsonContent.rid;
+            if (!jsonContentRid.Equals(_ridCounter))
             {
                 Debug.WriteLine("error: rid mismatch!\n");
                 return null;
@@ -208,6 +220,7 @@ namespace MyJdownloader_Api
         }
         private string PostQuery(string url, string postfields = "", byte[] ivKey = null)
         {
+
             var request = (HttpWebRequest)WebRequest.Create(url);
             if (!string.IsNullOrEmpty(postfields))
             {
@@ -219,26 +232,35 @@ namespace MyJdownloader_Api
                 postStream.Write(postByteArray, 0, postByteArray.Length);
                 postStream.Close();
             }
-            var response = (HttpWebResponse)request.GetResponse();
-            if (response.StatusCode != HttpStatusCode.OK)
+            HttpWebResponse response;
+            try
             {
-                response.Close();
-                return string.Empty;
+                response = (HttpWebResponse)request.GetResponse();
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    response.Close();
+                    return null;
+                }
+                Stream responseStream = response.GetResponseStream();
+                if (responseStream != null)
+                {
+                    var myStreamReader = new StreamReader(responseStream);
+                    string result = myStreamReader.ReadToEnd();
+                    response.Close();
+                    if (ivKey != null)
+                    {
+                        result = Decypt(result, ivKey);
+                    }
+                    return result;
+                }
             }
-            Stream responseStream = response.GetResponseStream();
-            var myStreamReader = new StreamReader(responseStream);
-            string result = myStreamReader.ReadToEnd();
-            response.Close();
-            if (!string.IsNullOrEmpty(postfields))
+            catch (Exception exception)
             {
-                int headerSize = response.Headers.ToString().Length;
-                result = result.Substring(0, headerSize);
+                Debug.WriteLine(exception.Message);
+                return null;
+
             }
-            if (ivKey != null)
-            {
-                result = Decypt(result, ivKey);
-            }
-            return result;
+            return null;
         }
 
         private string Sign(string data, byte[] key)
@@ -324,7 +346,7 @@ namespace MyJdownloader_Api
             {
                 using (var sr = new StreamReader(cs))
                 {
-                    sRet = sr.ReadLine();
+                    sRet = sr.ReadToEnd();
                 }
             }
             return sRet;
