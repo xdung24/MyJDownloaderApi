@@ -7,9 +7,9 @@ Setup JDownloader for my.jdownloader.org in Settings/My.JDownloader.
 If you already registered at my.jdownloader.org than simply fill fields Username/Email, Password and Device Name, otherwise press button "Go to My.JDownloader.org" and complete registration.
 
 Now you can initialize the class
-
+```C#
 var jDownloader = new JDownloader();
-
+```
 Connect to my.jdownloader.org
 ```C#
 Downloader.Connect("email", "password");
