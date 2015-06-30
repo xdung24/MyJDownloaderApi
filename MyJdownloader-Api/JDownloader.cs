@@ -265,6 +265,10 @@ namespace MyJdownloader_Api
 
         private string Sign(string data, byte[] key)
         {
+            if (key == null)
+            {
+                throw new Exception("Null ivKey, maybe not logged in yet or disconnected");
+            }
             var dataByte = Encoding.UTF8.GetBytes(data);
             var hmacsha256 = new HMACSHA256(key);
             hmacsha256.ComputeHash(dataByte);
