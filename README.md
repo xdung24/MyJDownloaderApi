@@ -39,4 +39,4 @@ jDownloader.AddLinks(yourdevice, "download link", "package name");
 ```
 Available methods: connect, reconnect, disconnect, enumerateDevices, getDirectConnectionInfos, callAction, addLinks, start, stop and more maybe later.
 
-Copyright @ 2015
+Copyright (c) 2015 Dung Lee
