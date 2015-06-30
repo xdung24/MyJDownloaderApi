@@ -35,8 +35,8 @@ var yourdevice = jDownloader.Devices[0];
 ```
 Add links to jdownloader and start it
 ```C#
-jDownloader.AddLinks(yourdevice, "download link", "package name");
+jDownloader.AddLink(yourdevice, "download link", "package name");
 ```
-Available methods: connect, reconnect, disconnect, enumerateDevices, getDirectConnectionInfos, callAction, addLinks, start, stop and more maybe later.
+Available methods: connect, reconnect, disconnect, enumerateDevices, getDirectConnectionInfos, callAction, addLink, start, stop and more maybe later.
 
 Copyright (c) 2015 Dung Lee
