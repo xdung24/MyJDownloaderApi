@@ -33,13 +33,8 @@ or select first device in device list
 ```C#
 var yourdevice = jDownloader.Devices[0];
 ```
-Build links array
-```C#
-var links = new[]{
-	"some link"
-};
-```
 Add links to jdownloader and start it
 ```C#
-jDownloader.AddLinks(yourdevice, links, "package name");
+jDownloader.AddLinks(yourdevice, "download link", "package name");
 ```
+Copyright @ 2015
