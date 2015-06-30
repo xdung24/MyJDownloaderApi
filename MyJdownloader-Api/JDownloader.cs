@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
@@ -9,6 +8,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace MyJdownloader_Api
@@ -17,15 +17,18 @@ namespace MyJdownloader_Api
     {
         public class Device
         {
-            public string id;
-            public string name;
-            public string type;
+            [JsonProperty(PropertyName = "id")]
+            public string Id;
+            [JsonProperty(PropertyName = "name")]
+            public string Name;
+            [JsonProperty(PropertyName = "type")]
+            public string Type;
         }
         private const string ApiUrl = "http://api.jdownloader.org";
-        private const string Version = "1.0.18062014";
+        private const string Version = "1.0.0";
         private const string ServerDomain = "server";
         private const string DeviceDomain = "device";
-        private const string Appkey = "MYJDAPI_php";
+        private const string Appkey = "MyJDAPI_CSharp";
         private const int ApiVer = 1;
 
         private int _ridCounter;
@@ -115,11 +118,11 @@ namespace MyJdownloader_Api
             return true;
         }
 
-        public bool AddLinks(Device device, string links, string package)
+        public bool AddLink(Device device, string link, string package)
         {
             dynamic obj = new ExpandoObject();
             obj.priority = "DEFAULT";
-            obj.links = links;
+            obj.links = link;
             obj.autostart = true;
             obj.packageName = package;
             string json = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
@@ -148,21 +151,12 @@ namespace MyJdownloader_Api
             }
             return true;
         }
-        public bool Pause(Device device,bool set)
-        {
-            string result = CallAction(device, "/downloadcontroller/pause?"+set.ToString().ToLower(), null);
-            if (string.IsNullOrEmpty(result))
-            {
-                return false;
-            }
-            return true;
-        }
         private string CallServer(string query, byte[] key, string param = "")
         {
             string rid;
             if (!string.IsNullOrEmpty(param))
             {
-                if (key == null)
+                if (key != null)
                 {
                     param = Encrypt(param, key);
                 }
@@ -210,12 +204,12 @@ namespace MyJdownloader_Api
                 Debug.WriteLine("No device with the given name");
                 return null;
             }
-            if (string.IsNullOrEmpty(device.id))
+            if (string.IsNullOrEmpty(device.Id))
             {
                 Debug.WriteLine("Device is found with empty id");
                 return null;
             }
-            string query = "/t_" + HttpUtility.UrlEncode(_sessiontoken) + "_" + HttpUtility.UrlEncode(device.id) + action;
+            string query = "/t_" + HttpUtility.UrlEncode(_sessiontoken) + "_" + HttpUtility.UrlEncode(device.Id) + action;
             dynamic p = new ExpandoObject();
             p.url = action;
             if (param != null)
@@ -326,7 +320,6 @@ namespace MyJdownloader_Api
                     key[i - 16] = ivKey[i];
                 }
             }
-            byte[] encrypted;
             var rj = new RijndaelManaged
             {
                 Key = key,
@@ -341,7 +334,7 @@ namespace MyJdownloader_Api
             {
                 swEncrypt.Write(data);
             }
-            encrypted = msEncrypt.ToArray();
+            byte[] encrypted = msEncrypt.ToArray();
             return Convert.ToBase64String(encrypted);
         }
 
@@ -361,7 +354,6 @@ namespace MyJdownloader_Api
                 }
             }
             byte[] cypher = Convert.FromBase64String(data);
-            var sRet = "";
             var rj = new RijndaelManaged
             {
                 BlockSize = 128,
@@ -370,18 +362,18 @@ namespace MyJdownloader_Api
                 Key = key
             };
             var ms = new MemoryStream(cypher);
-
+            string result;
             using (var cs = new CryptoStream(ms, rj.CreateDecryptor(), CryptoStreamMode.Read))
             {
                 using (var sr = new StreamReader(cs))
                 {
-                    sRet = sr.ReadToEnd();
+                    result = sr.ReadToEnd();
                 }
             }
-            return sRet;
+            return result;
         }
 
-        public byte[] UpdateEncryptionToken(byte[] oldToken, string updateToken)
+        private byte[] UpdateEncryptionToken(byte[] oldToken, string updateToken)
         {
             byte[] newtoken = FromHex(updateToken);
             var newhash = new byte[oldToken.Length + newtoken.Length];

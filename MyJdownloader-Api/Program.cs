@@ -14,13 +14,12 @@ namespace MyJdownloader_Api
             Console.WriteLine("EnumerateDevices:" + jDownloader.EnumerateDevices());
             foreach (var device in jDownloader.Devices)
             {
-                Console.WriteLine("{0}:{1}",device.name,device.id  );
+                Console.WriteLine("{0}:{1}", device.Name, device.Id);
             }
-            var yourdevice = jDownloader.Devices.FirstOrDefault(x => x.name == "JDOWNLOADER_DEVICE");
+            var yourdevice = jDownloader.Devices.FirstOrDefault(x => x.Name == "JDOWNLOADER_DEVICE");
             var link = "DOWNLOAD_LINK";
             string package = "PACKAGE_NAME";
-            Console.WriteLine("AddLinks:" + jDownloader.AddLinks(yourdevice, link, package));
-
+            Console.WriteLine("AddLinks:" + jDownloader.AddLink(yourdevice, link, package));
         }
     }
 }
