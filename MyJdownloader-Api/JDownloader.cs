@@ -99,8 +99,6 @@ namespace MyJdownloader_Api
                 return false;
             dynamic jsonContent = JObject.Parse(response);
             Devices = jsonContent.list.ToObject<List<Device>>();
-            if (GetDirectConnectionInfos() == false)
-                return false;
             return true;
         }
         public bool GetDirectConnectionInfos()
@@ -132,6 +130,33 @@ namespace MyJdownloader_Api
             return true;
         }
 
+        public bool Stop(Device device)
+        {
+            string result = CallAction(device, "/downloadcontroller/stop", null);
+            if (string.IsNullOrEmpty(result))
+            {
+                return false;
+            }
+            return true;
+        }
+        public bool Start(Device device)
+        {
+            string result = CallAction(device, "/downloadcontroller/start", null);
+            if (string.IsNullOrEmpty(result))
+            {
+                return false;
+            }
+            return true;
+        }
+        public bool Pause(Device device,bool set)
+        {
+            string result = CallAction(device, "/downloadcontroller/pause?"+set.ToString().ToLower(), null);
+            if (string.IsNullOrEmpty(result))
+            {
+                return false;
+            }
+            return true;
+        }
         private string CallServer(string query, byte[] key, string param = "")
         {
             string rid;
