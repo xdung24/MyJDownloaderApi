@@ -17,7 +17,7 @@ var jDownloader = new JDownloader();
 ```
 Connect to my.jdownloader.org
 ```C#
-Downloader.Connect("email", "password");
+jDownloader.Connect("email", "password");
 ```
 Enumerate Devices
 ```C#
