@@ -15,7 +15,7 @@ namespace MyJdownloader_Api
 {
     public class JDownloader
     {
-        public class Device
+        public class JdDevice
         {
             [JsonProperty(PropertyName = "id")]
             public string Id;
@@ -23,6 +23,31 @@ namespace MyJdownloader_Api
             public string Name;
             [JsonProperty(PropertyName = "type")]
             public string Type;
+        }
+        public class DownloadPackageQuery
+        {
+            [JsonProperty(PropertyName = "bytesTotal")]
+            public string BytesTotal;
+            [JsonProperty(PropertyName = "enabled")]
+            public string Enabled;
+            [JsonProperty(PropertyName = "finished")]
+            public string Finished;
+            [JsonProperty(PropertyName = "name")]
+            public string Name;
+            [JsonProperty(PropertyName = "packageUUID")]
+            public string PackageUuiD;
+            [JsonProperty(PropertyName = "running")]
+            public string Running;
+            [JsonProperty(PropertyName = "status")]
+            public string Status;
+            [JsonProperty(PropertyName = "url")]
+            public string Url;
+            [JsonProperty(PropertyName = "uuid")]
+            public string Uuid;
+            [JsonProperty(PropertyName = "comment")]
+            public string comment;
+            [JsonProperty(PropertyName = "host")]
+            public string host;
         }
         private const string ApiUrl = "http://api.jdownloader.org";
         private const string Version = "1.0.0";
@@ -40,9 +65,9 @@ namespace MyJdownloader_Api
         private byte[] _serverEncryptionToken;
         private byte[] _deviceEncryptionToken;
 
-        public List<Device> Devices = new List<Device>();
+        public List<JdDevice> Devices = new List<JdDevice>();
 
-
+        #region public method
         public JDownloader(string email = "", string password = "")
         {
             _ridCounter = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
@@ -101,7 +126,7 @@ namespace MyJdownloader_Api
             if (string.IsNullOrEmpty(response))
                 return false;
             dynamic jsonContent = JObject.Parse(response);
-            Devices = jsonContent.list.ToObject<List<Device>>();
+            Devices = jsonContent.list.ToObject<List<JdDevice>>();
             return true;
         }
         public bool GetDirectConnectionInfos()
@@ -118,7 +143,7 @@ namespace MyJdownloader_Api
             return true;
         }
 
-        public bool AddLink(Device device, string link, string package)
+        public bool AddLink(JdDevice device, string link, string package)
         {
             dynamic obj = new ExpandoObject();
             obj.priority = "DEFAULT";
@@ -133,7 +158,7 @@ namespace MyJdownloader_Api
             return true;
         }
 
-        public bool Stop(Device device)
+        public bool Stop(JdDevice device)
         {
             string result = CallAction(device, "/downloadcontroller/stop", null);
             if (string.IsNullOrEmpty(result))
@@ -142,7 +167,7 @@ namespace MyJdownloader_Api
             }
             return true;
         }
-        public bool Start(Device device)
+        public bool Start(JdDevice device)
         {
             string result = CallAction(device, "/downloadcontroller/start", null);
             if (string.IsNullOrEmpty(result))
@@ -151,6 +176,84 @@ namespace MyJdownloader_Api
             }
             return true;
         }
+
+        public string GetCurrentState(JdDevice device)
+        {
+            string response = CallAction(device, "/downloadcontroller/getCurrentState", null);
+            if (!string.IsNullOrEmpty(response))
+            {
+                dynamic jsonContent = JObject.Parse(response);
+                return jsonContent.data;
+            }
+            return "";
+        }
+
+        public string GetSpeedInBps(JdDevice device)
+        {
+            string response = CallAction(device, "/downloadcontroller/getSpeedInBps", null);
+            if (!string.IsNullOrEmpty(response))
+            {
+                dynamic jsonContent = JObject.Parse(response);
+                return jsonContent.data;
+            }
+            return "";
+        }
+
+        public string PackageCount(JdDevice device)
+        {
+            string response = CallAction(device, "/downloadsV2/packageCount", null);
+            if (!string.IsNullOrEmpty(response))
+            {
+                dynamic jsonContent = JObject.Parse(response);
+                return jsonContent.data;
+            }
+            return "";
+        }
+
+        public void ExitJd(JdDevice device)
+        {
+            string response = CallAction(device, "/system/exitJD", null);
+            if (!string.IsNullOrEmpty(response))
+            {
+                dynamic jsonContent = JObject.Parse(response);
+                string data = jsonContent.data;
+            }
+        }
+
+        public void RestartJd(JdDevice device)
+        {
+            string response = CallAction(device, "/system/restartJD", null);
+            if (!string.IsNullOrEmpty(response))
+            {
+                dynamic jsonContent = JObject.Parse(response);
+                string data = jsonContent.data;
+            }
+        }
+
+        public IEnumerable<DownloadPackageQuery> QueryLinks(JdDevice device)
+        {
+            dynamic obj = new ExpandoObject();
+            obj.bytesTotal = true;
+            obj.comment = true;
+            obj.status = true;
+            obj.enabled = true;
+            obj.packageUUIDs = null;
+            obj.host = true;
+            obj.url = true;
+            obj.finished = true;
+            obj.running = true;
+            string json = JsonConvert.SerializeObject(obj);
+            var param = new[] { json };
+            string result = CallAction(device, "/downloadsV2/queryLinks", param);
+            dynamic jsonObject = JObject.Parse(result);
+            dynamic links = jsonObject.data.ToObject<List<DownloadPackageQuery>>();
+            if (string.IsNullOrEmpty(result))
+                return null;
+            return links;
+        }
+        #endregion
+
+        #region private method
         private string CallServer(string query, byte[] key, string param = "")
         {
             string rid;
@@ -181,7 +284,7 @@ namespace MyJdownloader_Api
                 return null;
             dynamic jsonContent = JObject.Parse(response);
             int jsonContentRid = jsonContent.rid;
-            if (!jsonContentRid.Equals(_ridCounter))
+            if (!jsonContentRid.Equals(_ridCounter) && jsonContentRid > 0)
             {
                 Debug.WriteLine("error: rid mismatch!\n");
                 return null;
@@ -191,7 +294,7 @@ namespace MyJdownloader_Api
             return response;
         }
 
-        private string CallAction(Device device, string action, dynamic param)
+        private string CallAction(JdDevice device, string action, dynamic param)
         {
             if (Devices == null || Devices.Count == 0)
             {
@@ -228,7 +331,7 @@ namespace MyJdownloader_Api
                 return null;
             dynamic jsonContent = JObject.Parse(response);
             int jsonContentRid = jsonContent.rid;
-            if (!jsonContentRid.Equals(_ridCounter))
+            if (!jsonContentRid.Equals(_ridCounter) && jsonContentRid > 0)
             {
                 Debug.WriteLine("error: rid mismatch!\n");
                 return null;
@@ -254,7 +357,7 @@ namespace MyJdownloader_Api
             HttpWebResponse response;
             try
             {
-                response = (HttpWebResponse)request.GetResponse();
+                response = (HttpWebResponse) request.GetResponse();
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
                     response.Close();
@@ -272,6 +375,24 @@ namespace MyJdownloader_Api
                     }
                     return result;
                 }
+            }
+            catch (WebException exception)
+            {
+                if (exception.Response != null)
+                {
+                    Debug.WriteLine(exception.Message);
+                    if (exception.Response != null)
+                    {
+                        Stream respsone = exception.Response.GetResponseStream();
+                        if (respsone != null)
+                        {
+                            string resp = new StreamReader(respsone).ReadToEnd();
+                            Debug.WriteLine(resp);
+                        }
+                    }
+                    return null;
+                }
+
             }
             catch (Exception exception)
             {
@@ -340,6 +461,10 @@ namespace MyJdownloader_Api
 
         private string Decypt(string data, byte[] ivKey)
         {
+            if (ivKey == null)
+            {
+                throw new Exception("Null ivKey, maybe not logged in yet or disconnected");
+            }
             var iv = new byte[16];
             var key = new byte[16];
             for (int i = 0; i < 32; i++)
@@ -406,5 +531,7 @@ namespace MyJdownloader_Api
             }
             return raw;
         }
+        #endregion
+  
     }
 }
